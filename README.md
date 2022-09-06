@@ -2,12 +2,10 @@
 
 ## Data augmentation techniques:
 - Translation
-- Scaling
-- Translation
-- Cropping
+- Cropping 
 - Noise *
 - Brightness *
-- Contrast
+- Contrast *
 - Saturation *
 - Gaussian blur *
 

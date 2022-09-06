@@ -44,14 +44,20 @@ class Data_Augmentation:
         LABELS_FOLDER = os.path.join(self.TARGET_FOLDER, "labels")
         print("Saving data to " + self.TARGET_FOLDER + "...")
         for i, data in enumerate(self.augmented_dataset):
-            
-            pass
+            cv2.imwrite(os.path.join(IMAGE_FOLDER,str(i)+".jpg"),data["image"])
+            self.save_bb(os.path.join(LABELS_FOLDER,str(i)+".txt"),data["bounding_boxes"])
 
-    def save_bb(self, labels, name):
-        with open(name, "w") as f:
+    def save_bb(self, DIR_NAME, labels):
+        with open(DIR_NAME, "w") as f:
             for bb in labels:
-                line=[bb["class"], lab]
-
+                line = "{} {} {} {} {}\n".format(
+                    bb["class"],
+                    bb["x_center"],
+                    bb["y_center"],
+                    bb["width"],
+                    bb["height"]
+                )
+                f.write(line)
 
 
     # def load_images(self, IMAGE_FOLDER, extension):
@@ -65,3 +71,6 @@ class Data_Augmentation:
         gaussian_img = np.array(255*gaussian_img, dtype="uint8")
         print(gaussian_img)
         return gaussian_img
+    
+    def translation(self, img):
+        pass
