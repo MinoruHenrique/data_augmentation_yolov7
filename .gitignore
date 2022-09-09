@@ -1,3 +1,7 @@
+# hidden folders
 venv
+#testing files/folders
 test.py
+test_functions.py
 testing_dataset
+testing_augmented

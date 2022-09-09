@@ -1,7 +1,7 @@
 # Data Augmentation on YOLO
 
 ## Data augmentation techniques:
-- Translation
+- Translation *
 - Cropping 
 - Noise *
 - Brightness *
