@@ -11,6 +11,7 @@ class Data_Augmentation:
 
     def __init__(self, TARGET_FOLDER):
         self.dataset = []
+        self.operations = []
         self.augmented_dataset = []
         self.TARGET_FOLDER = TARGET_FOLDER
 
@@ -51,9 +52,10 @@ class Data_Augmentation:
             self.gaussian_blur
         ]
         for data in self.dataset:
-            operation = random.choice(operations)
             self.augmented_dataset.append(data)
             for i in range(n_processing):
+                operation = random.choice(operations)
+                self.operations.append(operation)
                 new_data = operation(data)
                 self.augmented_dataset.append(new_data)
 
@@ -65,11 +67,11 @@ class Data_Augmentation:
 
         IMAGE_FOLDER = os.path.join(self.TARGET_FOLDER, "images")
         LABELS_FOLDER = os.path.join(self.TARGET_FOLDER, "labels")
-        print("Saving data to " + self.TARGET_FOLDER + "...")
+        print('Saving data to "./' + self.TARGET_FOLDER + '"...')
 
         for i, data in enumerate(self.augmented_dataset):
             cv2.imwrite(os.path.join(
-                IMAGE_FOLDER, str(i)+".jpg"), data["image"])
+                IMAGE_FOLDER, str(i)+".jpg"), cv2.cvtColor(data["image"],cv2.COLOR_RGB2BGR))
             self.save_bb(os.path.join(LABELS_FOLDER, str(
                 i)+".txt"), data["bounding_boxes"])
 
@@ -104,8 +106,6 @@ class Data_Augmentation:
         # image generation
         y_abs = int(y*image.shape[0])
         x_abs = int(x*image.shape[1])
-        print("Holi")
-        print(x_abs, y_abs)
         M = np.float32([
             [1, 0, x_abs],
             [0, 1, y_abs]
@@ -116,7 +116,6 @@ class Data_Augmentation:
         for bb in bbs:
             new_x = bb["x_center"]+x
             new_y = bb["y_center"]+y
-
             if (new_x > 1 or new_x < 0):
                 continue
             if (new_y > 1 or new_y < 0):
@@ -132,7 +131,7 @@ class Data_Augmentation:
             new_bbs.append(new_bb)
 
         new_data["image"] = new_image
-        new_data["bounding_boxe"] = new_bbs
+        new_data["bounding_boxes"] = new_bbs
 
         return new_data
 
@@ -153,7 +152,7 @@ class Data_Augmentation:
         img = Image.fromarray(img)
         enhancer = ImageEnhance.Contrast(img)
         new_image = enhancer.enhance(0.5)
-        new_data["image"] = new_image
+        new_data["image"] = np.array(new_image)
         new_data["bounding_boxes"] = data["bounding_boxes"]
         return new_data
 
@@ -163,7 +162,7 @@ class Data_Augmentation:
         img = Image.fromarray(img)
         enhancer = ImageEnhance.Color(img)
         new_image = enhancer.enhance(3)
-        new_data["image"] = new_image
+        new_data["image"] = np.array(new_image)
         new_data["bounding_boxes"] = data["bounding_boxes"]
 
         return new_data
@@ -173,6 +172,6 @@ class Data_Augmentation:
         img = data["image"]
         img = Image.fromarray(img)
         new_image = img.filter(ImageFilter.GaussianBlur(9))
-        new_data["image"] = new_image
+        new_data["image"] = np.array(new_image)
         new_data["bounding_boxes"] = data["bounding_boxes"]
         return new_data
