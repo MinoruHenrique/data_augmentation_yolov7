@@ -5,7 +5,7 @@ import random
 import numpy as np
 from skimage.util import random_noise
 from PIL import Image, ImageEnhance, ImageFilter
-
+from pathlib import Path
 
 class Data_Augmentation:
 
@@ -20,7 +20,7 @@ class Data_Augmentation:
         # LABEL_DIRS = glob.glob(os.path.join(IMAGE_FOLDER,"*."+label_extension))
         for IMAGE_DIR in IMAGE_DIRS:
             data = {}
-            img_name = IMAGE_DIR.split("/")[-1].split(".")[0]
+            img_name = Path(IMAGE_DIR).stem
             if (os.path.exists(os.path.join(LABEL_FOLDER, img_name+".txt"))):
                 data["image"] = cv2.cvtColor(cv2.imread(IMAGE_DIR),cv2.COLOR_BGR2RGB)
                 data["bounding_boxes"] = self.load_label(
@@ -51,7 +51,10 @@ class Data_Augmentation:
             self.saturation,
             self.gaussian_blur
         ]
+        i = 0
         for data in self.dataset:
+            print(i)
+            i += 1
             self.augmented_dataset.append(data)
             for i in range(n_processing):
                 operation = random.choice(operations)
@@ -60,13 +63,16 @@ class Data_Augmentation:
                 self.augmented_dataset.append(new_data)
 
     def save_data(self):
-        if (not os.path.exists(self.TARGET_FOLDER)):
-            os.mkdir(self.TARGET_FOLDER)
-            os.mkdir(os.path.join(self.TARGET_FOLDER, "images"))
-            os.mkdir(os.path.join(self.TARGET_FOLDER, "labels"))
-
         IMAGE_FOLDER = os.path.join(self.TARGET_FOLDER, "images")
         LABELS_FOLDER = os.path.join(self.TARGET_FOLDER, "labels")
+        if (not os.path.exists(self.TARGET_FOLDER)):
+            os.mkdir(self.TARGET_FOLDER)
+            os.mkdir(IMAGE_FOLDER)
+            os.mkdir(LABELS_FOLDER)
+        elif (not os.path.exists(IMAGE_FOLDER) or not os.path.exists(LABELS_FOLDER) ):
+            os.mkdir(IMAGE_FOLDER)
+            os.mkdir(LABELS_FOLDER)
+
         print('Saving data to "./' + self.TARGET_FOLDER + '"...')
 
         for i, data in enumerate(self.augmented_dataset):
@@ -87,19 +93,20 @@ class Data_Augmentation:
                 )
                 f.write(line)
 
-    def noise(self, data):
+    def noise(self, data, lims=[0.008, 0.1]):
         new_data = {}
         image = data["image"]
-        gaussian_img = random_noise(image, mode="gaussian")
+        random_var =  np.random.uniform(lims[0],lims[1])
+        gaussian_img = random_noise(image, mode="gaussian", var=random_var)
         # gaussian_img = cv2.addWeighted(image,0.75,0.25*random_noise,0.25,0)
         gaussian_img = np.array(255*gaussian_img, dtype="uint8")
         new_data["image"] = gaussian_img
         new_data["bounding_boxes"] = data["bounding_boxes"]
         return new_data
 
-    def translation(self, data):
-        x = np.random.uniform(-0.8, 0.8)
-        y = np.random.uniform(-0.8, 0.8)
+    def translation(self, data, lims=[-0.2, 0.3]):
+        x = np.random.uniform(lims[0], lims[1])
+        y = np.random.uniform(lims[0], lims[1])
         image = data["image"]
         bbs = data["bounding_boxes"]
         new_data = {}
@@ -135,10 +142,10 @@ class Data_Augmentation:
 
         return new_data
 
-    def illumination(self, data):
+    def illumination(self, data, lims=[0.15, 3]):
         new_data = {}
         src = data["image"]
-        gamma = 2*np.random.rand(1)
+        gamma = np.random.uniform(lims[0], lims[1])
         invGamma = 1 / gamma
         table = [((i / 255) ** invGamma) * 255 for i in range(256)]
         table = np.array(table, np.uint8)
@@ -146,32 +153,36 @@ class Data_Augmentation:
         new_data["bounding_boxes"] = data["bounding_boxes"]
         return new_data
 
-    def contrast(self, data):
+    def contrast(self, data,  lims=[0.5, 2]):
         new_data = {}
+
+        random_enhance = np.random.uniform(lims[0], lims[1])        
         img = data["image"]
         img = Image.fromarray(img)
         enhancer = ImageEnhance.Contrast(img)
-        new_image = enhancer.enhance(0.5)
+        new_image = enhancer.enhance(random_enhance)
         new_data["image"] = np.array(new_image)
         new_data["bounding_boxes"] = data["bounding_boxes"]
         return new_data
 
-    def saturation(self, data):
+    def saturation(self, data, lims=[0.5, 3]):
         new_data = {}
+        random_enhance = np.random.uniform(lims[0], lims[1])
         img = data["image"]
         img = Image.fromarray(img)
         enhancer = ImageEnhance.Color(img)
-        new_image = enhancer.enhance(3)
+        new_image = enhancer.enhance(random_enhance)
         new_data["image"] = np.array(new_image)
         new_data["bounding_boxes"] = data["bounding_boxes"]
 
         return new_data
 
-    def gaussian_blur(self, data):
+    def gaussian_blur(self, data, lims=[1.5, 4]):
         new_data = {}
+        random_blur = np.random.uniform(lims[0], lims[1])
         img = data["image"]
         img = Image.fromarray(img)
-        new_image = img.filter(ImageFilter.GaussianBlur(9))
+        new_image = img.filter(ImageFilter.GaussianBlur(random_blur))
         new_data["image"] = np.array(new_image)
         new_data["bounding_boxes"] = data["bounding_boxes"]
         return new_data
